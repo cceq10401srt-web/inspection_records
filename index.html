@@ -791,11 +791,11 @@ async function sendEmailNotify(data) {
   `;
 
   try {
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://uucujsguilndlwgueiez.supabase.co/functions/v1/send-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + RESEND_API_KEY
+        'Authorization': 'Bearer ' + SUPABASE_KEY
       },
       body: JSON.stringify({
         from: EMAIL_FROM,
