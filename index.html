@@ -811,7 +811,8 @@ async function sendEmailNotify(data) {
         html: htmlBody,
         attachments: [{
           filename: fileName,
-          content: reportBase64
+          content: reportBase64,
+          type: 'text/html'
         }]
       })
     });
