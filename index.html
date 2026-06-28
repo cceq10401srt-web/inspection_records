@@ -760,24 +760,26 @@ async function sendLineNotify(data) {
     '🏭 公私場所：' + (data.site_name || '—'),
     '📅 檢測日期：' + (data.inspect_date || '—'),
     '🏢 檢測公司：' + (data.company_name || '—'),
-    '👤 工研院同仁：' + [data.itri1, data.itri2, data.itri3].filter(Boolean).join('、') || '—',
+    '👤 工研院同仁：' + ([data.itri1, data.itri2, data.itri3].filter(Boolean).join('、') || '—'),
     '🔬 檢測項目：' + (Array.isArray(data.test_items) ? data.test_items.join('、') : '—'),
     '📍 採樣口數：' + (Array.isArray(data.sampling_ports) ? data.sampling_ports.length + ' 個' : '—'),
   ].join('\n');
 
   try {
-    await fetch('https://api.line.me/v2/bot/message/push', {
+    const res = await fetch('https://uucujsguilndlwgueiez.supabase.co/functions/v1/line-notify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + LINE_TOKEN
+        'Authorization': 'Bearer ' + SUPABASE_KEY
       },
       body: JSON.stringify({
-        to: LINE_USER_ID,
-        messages: [{ type: 'text', text: msg }]
+        message: msg,
+        userId: LINE_USER_ID,
+        token: LINE_TOKEN
       })
     });
-    console.log('LINE 通知已送出');
+    const result = await res.json();
+    console.log('LINE 通知結果：', result);
   } catch(e) {
     console.warn('LINE 通知失敗：', e.message);
   }
