@@ -754,6 +754,63 @@ const TABLE = 'inspection_records';
 const LINE_TOKEN = '2BQdPFpd9MUFxOvikkshTWVeM+gSbagYSdK82l7lmEkeycT0jVavtRpxUh3K4XJv/xC+6lnU/bDpaVFw10XDrQlb62QjGpuln6z2q6rX5iKkvOlUlAkcb3Otv4y9dOO1S7iGqxAE6Pj63h49NHDXyQdB04t89/1O/w1cDnyilFU=';
 const LINE_USER_ID = 'U8dc02aa9c8043a4bdf322708d7264704';
 
+// ── Resend Email 設定 ──
+const RESEND_API_KEY = 're_RUMPekB8_JUbX853tB8RrZqHt14CKuP6c';
+const EMAIL_TO = 'cceq10401srt@gmail.com';
+const EMAIL_FROM = 'onboarding@resend.dev';
+
+async function sendEmailNotify(data) {
+  const ports = Array.isArray(data.sampling_ports) ? data.sampling_ports : [];
+  const testItems = Array.isArray(data.test_items) ? data.test_items.join('、') : '—';
+  const itri = [data.itri1, data.itri2, data.itri3].filter(Boolean).join('、') || '—';
+
+  const htmlBody = `
+    <div style="font-family:'Microsoft JhengHei',sans-serif;max-width:600px;margin:0 auto;border:1px solid #c5d8cc;border-radius:10px;overflow:hidden;">
+      <div style="background:#1a3d2b;color:#fff;padding:18px 24px;">
+        <h2 style="margin:0;font-size:18px;">📋 排放管道檢測作業紀錄通知</h2>
+        <p style="margin:4px 0 0;opacity:.8;font-size:13px;">${data.status === 'done' ? '✅ 已完成' : '📝 草稿'}</p>
+      </div>
+      <div style="padding:20px 24px;background:#f4faf6;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tr><td style="padding:8px 0;color:#5a6b61;width:140px;">公私場所</td><td style="padding:8px 0;font-weight:700;">${data.site_name || '—'}</td></tr>
+          <tr><td style="padding:8px 0;color:#5a6b61;">檢測日期</td><td style="padding:8px 0;">${data.inspect_date || '—'}</td></tr>
+          <tr><td style="padding:8px 0;color:#5a6b61;">入廠時間</td><td style="padding:8px 0;">${data.entry_time || '—'}</td></tr>
+          <tr><td style="padding:8px 0;color:#5a6b61;">檢測公司</td><td style="padding:8px 0;">${data.company_name || '—'}</td></tr>
+          <tr><td style="padding:8px 0;color:#5a6b61;">檢測人員</td><td style="padding:8px 0;">${data.staff_list || '—'}</td></tr>
+          <tr><td style="padding:8px 0;color:#5a6b61;">工研院同仁</td><td style="padding:8px 0;">${itri}</td></tr>
+          <tr><td style="padding:8px 0;color:#5a6b61;">檢測項目</td><td style="padding:8px 0;">${testItems}</td></tr>
+          <tr><td style="padding:8px 0;color:#5a6b61;">採樣口數</td><td style="padding:8px 0;">${ports.length} 個</td></tr>
+          <tr><td style="padding:8px 0;color:#5a6b61;">防制設備</td><td style="padding:8px 0;">${data.equip_name || '—'}</td></tr>
+        </table>
+        ${data.anomaly ? `<div style="margin-top:14px;padding:12px;background:#fff7e6;border-left:4px solid #c97c1a;border-radius:4px;"><b>⚠️ 異常說明：</b><br>${data.anomaly}</div>` : ''}
+      </div>
+      <div style="padding:12px 24px;background:#e8f3ec;font-size:12px;color:#5a6b61;text-align:center;">
+        此通知由 HAP 檢測紀錄系統自動發送・${new Date().toLocaleString('zh-TW')}
+      </div>
+    </div>
+  `;
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + RESEND_API_KEY
+      },
+      body: JSON.stringify({
+        from: EMAIL_FROM,
+        to: EMAIL_TO,
+        subject: '📋 檢測紀錄通知｜' + (data.site_name || '未命名') + '・' + (data.inspect_date || ''),
+        html: htmlBody
+      })
+    });
+    const result = await res.json();
+    console.log('Email 通知結果：', result);
+  } catch(e) {
+    console.warn('Email 通知失敗：', e.message);
+  }
+}
+
 async function sendLineNotify(data) {
   const msg = [
     '📋 排放管道檢測紀錄' + (data.status === 'done' ? '【已完成】' : '【草稿】'),
@@ -1113,12 +1170,14 @@ async function submitForm() {
       });
       toast('✅ 紀錄已更新');
       sendLineNotify(data);
+      sendEmailNotify(data);
       editingId = null;
     } else {
       // 新增紀錄
       await sbFetch(`${TABLE}`, { method: 'POST', body: JSON.stringify(data) });
       toast('✅ 紀錄已成功儲存至 Supabase');
       sendLineNotify(data);
+      sendEmailNotify(data);
     }
     setTimeout(() => showView('records'), 1200);
   } catch(e) {
