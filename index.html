@@ -764,6 +764,7 @@ async function sendEmailNotify(data) {
   const testItems = Array.isArray(data.test_items) ? data.test_items.join('、') : '—';
   const itri = [data.itri1, data.itri2, data.itri3].filter(Boolean).join('、') || '—';
 
+  // 信件內文
   const htmlBody = `
     <div style="font-family:'Microsoft JhengHei',sans-serif;max-width:600px;margin:0 auto;border:1px solid #c5d8cc;border-radius:10px;overflow:hidden;">
       <div style="background:#1a3d2b;color:#fff;padding:18px 24px;">
@@ -783,12 +784,18 @@ async function sendEmailNotify(data) {
           <tr><td style="padding:8px 0;color:#5a6b61;">防制設備</td><td style="padding:8px 0;">${data.equip_name || '—'}</td></tr>
         </table>
         ${data.anomaly ? `<div style="margin-top:14px;padding:12px;background:#fff7e6;border-left:4px solid #c97c1a;border-radius:4px;"><b>⚠️ 異常說明：</b><br>${data.anomaly}</div>` : ''}
+        <p style="margin-top:16px;font-size:13px;color:#5a6b61;">📎 完整表單請見附件 HTML 檔案，以瀏覽器開啟即可查看及列印。</p>
       </div>
       <div style="padding:12px 24px;background:#e8f3ec;font-size:12px;color:#5a6b61;text-align:center;">
         此通知由 HAP 檢測紀錄系統自動發送・${new Date().toLocaleString('zh-TW')}
       </div>
     </div>
   `;
+
+  // 產生附件 HTML 報表（與下載表單相同內容）
+  const reportHtml = generateReportHTML(data);
+  const reportBase64 = btoa(unescape(encodeURIComponent(reportHtml)));
+  const fileName = '排放管道檢測紀錄_' + (data.site_name || '未命名') + '_' + (data.inspect_date || '') + '.html';
 
   try {
     const res = await fetch('https://uucujsguilndlwgueiez.supabase.co/functions/v1/send-email', {
@@ -801,7 +808,11 @@ async function sendEmailNotify(data) {
         from: EMAIL_FROM,
         to: EMAIL_TO,
         subject: '📋 檢測紀錄通知｜' + (data.site_name || '未命名') + '・' + (data.inspect_date || ''),
-        html: htmlBody
+        html: htmlBody,
+        attachments: [{
+          filename: fileName,
+          content: reportBase64
+        }]
       })
     });
     const result = await res.json();
