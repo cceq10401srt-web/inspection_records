@@ -750,6 +750,39 @@ let SUPABASE_URL = 'https://uucujsguilndlwgueiez.supabase.co';
 let SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1Y3Vqc2d1aWxuZGx3Z3VlaWV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1MzUyNTksImV4cCI6MjA5ODExMTI1OX0.Ok3aRkgPRY7JH3HidEXgE2iHKZAdFuGiuaXmfg1DuEg';
 const TABLE = 'inspection_records';
 
+// ── LINE Messaging API 設定 ──
+const LINE_TOKEN = '2BQdPFpd9MUFxOvikkshTWVeM+gSbagYSdK82l7lmEkeycT0jVavtRpxUh3K4XJv/xC+6lnU/bDpaVFw10XDrQlb62QjGpuln6z2q6rX5iKkvOlUlAkcb3Otv4y9dOO1S7iGqxAE6Pj63h49NHDXyQdB04t89/1O/w1cDnyilFU=';
+const LINE_USER_ID = 'U8dc02aa9c8043a4bdf322708d7264704';
+
+async function sendLineNotify(data) {
+  const msg = [
+    '📋 排放管道檢測紀錄' + (data.status === 'done' ? '【已完成】' : '【草稿】'),
+    '🏭 公私場所：' + (data.site_name || '—'),
+    '📅 檢測日期：' + (data.inspect_date || '—'),
+    '🏢 檢測公司：' + (data.company_name || '—'),
+    '👤 工研院同仁：' + [data.itri1, data.itri2, data.itri3].filter(Boolean).join('、') || '—',
+    '🔬 檢測項目：' + (Array.isArray(data.test_items) ? data.test_items.join('、') : '—'),
+    '📍 採樣口數：' + (Array.isArray(data.sampling_ports) ? data.sampling_ports.length + ' 個' : '—'),
+  ].join('\n');
+
+  try {
+    await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + LINE_TOKEN
+      },
+      body: JSON.stringify({
+        to: LINE_USER_ID,
+        messages: [{ type: 'text', text: msg }]
+      })
+    });
+    console.log('LINE 通知已送出');
+  } catch(e) {
+    console.warn('LINE 通知失敗：', e.message);
+  }
+}
+
 function saveConfig() {
   SUPABASE_URL = document.getElementById('cfg-url').value.trim().replace(/\/$/, '');
   SUPABASE_KEY = document.getElementById('cfg-key').value.trim();
@@ -1077,11 +1110,13 @@ async function submitForm() {
         body: JSON.stringify(data)
       });
       toast('✅ 紀錄已更新');
+      sendLineNotify(data);
       editingId = null;
     } else {
       // 新增紀錄
       await sbFetch(`${TABLE}`, { method: 'POST', body: JSON.stringify(data) });
       toast('✅ 紀錄已成功儲存至 Supabase');
+      sendLineNotify(data);
     }
     setTimeout(() => showView('records'), 1200);
   } catch(e) {
