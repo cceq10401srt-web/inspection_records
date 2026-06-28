@@ -373,6 +373,92 @@
   }
   .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
 
+  /* 搜尋列 */
+  .search-bar {
+    display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .search-bar input {
+    flex: 1; min-width: 160px;
+    padding: 9px 14px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+    background: var(--white);
+  }
+  .search-bar input:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(58,143,94,.15);
+  }
+  .search-bar select {
+    padding: 9px 12px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+    background: var(--white); cursor: pointer;
+  }
+  .search-bar .btn-search {
+    background: var(--green-mid); color: var(--white); border: none;
+    border-radius: 8px; padding: 9px 18px; font-size: 14px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+    white-space: nowrap;
+  }
+  .search-bar .btn-clear {
+    background: var(--white); color: var(--text-muted);
+    border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 9px 14px; font-size: 14px; cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* 分區標題 */
+  .section-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 22px 0 12px;
+  }
+  .section-divider .sec-label {
+    font-size: 13px; font-weight: 700; white-space: nowrap;
+    padding: 4px 12px; border-radius: 20px;
+  }
+  .sec-done { background: var(--green-light); color: var(--green-mid); }
+  .sec-draft { background: var(--amber-light); color: var(--amber); }
+  .section-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* 首頁 */
+  #home-view { display: none; }
+  .home-hero {
+    background: var(--green-dark);
+    color: var(--white);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .home-hero .icon { font-size: 52px; margin-bottom: 12px; }
+  .home-hero h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .home-hero p { font-size: 14px; opacity: .78; }
+  .home-actions {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    margin-bottom: 24px;
+  }
+  @media(max-width:480px) { .home-actions { grid-template-columns: 1fr; } }
+  .home-action-card {
+    background: var(--white); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 22px 18px;
+    text-align: center; cursor: pointer;
+    transition: box-shadow .18s, border-color .18s;
+  }
+  .home-action-card:hover { box-shadow: var(--shadow); border-color: var(--accent); }
+  .home-action-card .icon { font-size: 36px; margin-bottom: 10px; }
+  .home-action-card h3 { font-size: 15px; font-weight: 700; color: var(--green-dark); margin-bottom: 4px; }
+  .home-action-card p { font-size: 12px; color: var(--text-muted); }
+  .home-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; text-align: center;
+  }
+  .stat-card .num { font-size: 28px; font-weight: 700; color: var(--green-mid); }
+  .stat-card .lbl { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
   /* ── CONFIG PANEL ── */
   #config-panel {
     background: var(--amber-light);
@@ -410,11 +496,12 @@
     <p>公私場所固定污染源檢測作業</p>
   </div>
   <div class="spacer"></div>
+  <button class="btn-records" onclick="showView('home')" style="margin-right:6px;">🏠 首頁</button>
   <button class="btn-records" onclick="showView('records')">📋 查看紀錄</button>
 </header>
 
 <!-- ── FORM VIEW ── -->
-<div id="form-view">
+<div id="form-view" style="display:none;">
   <div class="tab-bar">
     <button class="active" onclick="switchTab(0)">一、檢測排程</button>
     <button onclick="switchTab(1)">二、執行檢測</button>
@@ -724,11 +811,70 @@
 </div><!-- /form-view -->
 
 <!-- ══ RECORDS VIEW ══ -->
+<!-- ══ HOME VIEW ══ -->
+<div id="home-view" style="display:none;">
+  <div class="container" style="padding-top:24px;">
+    <div class="home-hero">
+      <div class="icon">🏭</div>
+      <h2>排放管道檢測作業紀錄表</h2>
+      <p>公私場所固定污染源檢測作業管理系統</p>
+    </div>
+    <div class="home-stats">
+      <div class="stat-card">
+        <div class="num" id="stat-total">—</div>
+        <div class="lbl">總紀錄數</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-done" style="color:var(--green-mid);">—</div>
+        <div class="lbl">已完成</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-draft" style="color:var(--amber);">—</div>
+        <div class="lbl">草稿</div>
+      </div>
+    </div>
+    <div class="home-actions">
+      <div class="home-action-card" onclick="newRecord()">
+        <div class="icon">📝</div>
+        <h3>新增紀錄表</h3>
+        <p>填寫新的檢測作業紀錄</p>
+      </div>
+      <div class="home-action-card" onclick="showView('records')">
+        <div class="icon">📋</div>
+        <h3>查看紀錄</h3>
+        <p>瀏覽、搜尋、下載歷史紀錄</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="records-view" style="display:none;">
   <div class="container" style="padding-top:24px;">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-      <button class="btn-sm btn-sm-green" onclick="showView('form')">← 返回填寫</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <button class="btn-sm btn-sm-green" onclick="showView('home')">← 返回首頁</button>
       <h2 style="font-size:17px;font-weight:700;">檢測紀錄列表</h2>
+      <div style="flex:1;"></div>
+      <button class="btn-sm btn-sm-green" onclick="newRecord()" style="background:var(--green-mid);color:#fff;border-color:var(--green-mid);">＋ 新增紀錄表</button>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="search-keyword" placeholder="🔍 搜尋廠家名稱 / 檢測公司..." oninput="filterRecords()">
+      <input type="date" id="search-date-from" onchange="filterRecords()" title="起始日期">
+      <input type="date" id="search-date-to" onchange="filterRecords()" title="結束日期">
+      <button class="btn-clear" onclick="clearSearch()">清除</button>
+    </div>
+    <div id="records-done-section" style="display:none;">
+      <div class="section-divider"><span class="sec-label sec-done">✅ 已完成</span></div>
+      <div id="records-done"></div>
+    </div>
+    <div id="records-draft-section" style="display:none;">
+      <div class="section-divider"><span class="sec-label sec-draft">📝 草稿</span></div>
+      <div id="records-draft"></div>
+    </div>
+    <div id="records-empty" style="display:none;">
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        <div>找不到符合的紀錄</div>
+      </div>
     </div>
     <div id="records-list"></div>
   </div>
@@ -1224,27 +1370,88 @@ async function showView(v) {
   if (v === 'form' && !editingId) {
     document.getElementById('submit-btn').textContent = '送出並儲存';
   }
+  document.getElementById('home-view').style.display = v === 'home' ? 'block' : 'none';
   document.getElementById('records-view').style.display = v === 'records' ? 'block' : 'none';
   document.getElementById('submit-bar').style.display = v === 'form' ? 'flex' : 'none';
   if (v === 'records') await loadRecords();
+  if (v === 'home') await loadHomeStats();
 }
 
-async function loadRecords() {
-  const list = document.getElementById('records-list');
-  list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">載入中...</div>';
+async function loadHomeStats() {
   try {
-    const records = await sbFetch(`${TABLE}?select=*&order=submitted_at.desc&limit=50`);
-    if (!records || records.length === 0) {
-      list.innerHTML = `
-        <div class="empty-state">
-          <div class="icon">📋</div>
-          <div>尚無檢測紀錄</div>
-          <div style="font-size:13px;margin-top:8px;">送出表單後，紀錄將顯示在此</div>
-        </div>`;
-      return;
-    }
-    list.innerHTML = '';
-    records.forEach(rec => {
+    const all = await sbFetch(`${TABLE}?select=id,status`);
+    const total = all.length;
+    const done = all.filter(r => r.status === 'done').length;
+    const draft = all.filter(r => r.status === 'draft').length;
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-done').textContent = done;
+    document.getElementById('stat-draft').textContent = draft;
+  } catch(e) { console.warn('stats error', e); }
+}
+
+function newRecord() {
+  editingId = null;
+  // 重置所有表單欄位
+  document.querySelectorAll('#form-view input[type=text], #form-view input[type=tel], #form-view input[type=date], #form-view input[type=time], #form-view textarea').forEach(el => el.value = '');
+  document.querySelectorAll('#form-view input[type=radio], #form-view input[type=checkbox]').forEach(el => el.checked = false);
+  document.getElementById('sampling-rows').innerHTML = '';
+  samplingRows = [];
+  addSamplingRow();
+  document.getElementById('inspect-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('submit-btn').textContent = '送出並儲存';
+  showView('form');
+  switchTab(0);
+}
+
+let allRecords = [];
+
+function filterRecords() {
+  const kw = (document.getElementById('search-keyword').value || '').trim().toLowerCase();
+  const from = document.getElementById('search-date-from').value;
+  const to = document.getElementById('search-date-to').value;
+
+  const filtered = allRecords.filter(r => {
+    const matchKw = !kw || (r.site_name||'').toLowerCase().includes(kw) || (r.company_name||'').toLowerCase().includes(kw);
+    const matchFrom = !from || (r.inspect_date && r.inspect_date >= from);
+    const matchTo = !to || (r.inspect_date && r.inspect_date <= to);
+    return matchKw && matchFrom && matchTo;
+  });
+  renderRecords(filtered);
+}
+
+function clearSearch() {
+  document.getElementById('search-keyword').value = '';
+  document.getElementById('search-date-from').value = '';
+  document.getElementById('search-date-to').value = '';
+  renderRecords(allRecords);
+}
+
+function renderRecords(records) {
+  const doneEl = document.getElementById('records-done');
+  const draftEl = document.getElementById('records-draft');
+  const doneSec = document.getElementById('records-done-section');
+  const draftSec = document.getElementById('records-draft-section');
+  const emptyEl = document.getElementById('records-empty');
+  doneEl.innerHTML = '';
+  draftEl.innerHTML = '';
+
+  const done = records.filter(r => r.status === 'done');
+  const draft = records.filter(r => r.status === 'draft');
+
+  if (records.length === 0) {
+    doneSec.style.display = 'none';
+    draftSec.style.display = 'none';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  doneSec.style.display = done.length > 0 ? 'block' : 'none';
+  draftSec.style.display = draft.length > 0 ? 'block' : 'none';
+
+  [done, draft].forEach((group, gi) => {
+    const container = gi === 0 ? doneEl : draftEl;
+    group.forEach(rec => {
       const card = document.createElement('div');
       card.className = 'record-card';
       card.dataset.rec = JSON.stringify(rec);
@@ -1260,10 +1467,38 @@ async function loadRecords() {
           <button class="btn-sm btn-sm-red" onclick="deleteRecord('${rec.id}', this)">🗑 刪除</button>
         </div>
       `;
-      list.appendChild(card);
+      container.appendChild(card);
     });
+  });
+}
+
+async function loadRecords() {
+  const doneEl = document.getElementById('records-done');
+  const draftEl = document.getElementById('records-draft');
+  doneEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">載入中...</div>';
+  draftEl.innerHTML = '';
+  document.getElementById('records-done-section').style.display = 'block';
+  document.getElementById('records-draft-section').style.display = 'none';
+  document.getElementById('records-empty').style.display = 'none';
+  try {
+    const records = await sbFetch(`${TABLE}?select=*&order=submitted_at.desc&limit=100`);
+    if (!records || records.length === 0) {
+      doneEl.innerHTML = '';
+      document.getElementById('records-done-section').style.display = 'none';
+      document.getElementById('records-empty').style.display = 'block';
+      document.getElementById('records-empty').innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📋</div>
+          <div>尚無檢測紀錄</div>
+          <div style="font-size:13px;margin-top:8px;">點「新增紀錄表」開始填寫</div>
+        </div>`;
+      allRecords = [];
+      return;
+    }
+    allRecords = records;
+    renderRecords(allRecords);
   } catch(e) {
-    list.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><div>載入失敗：${e.message}</div></div>`;
+    doneEl.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><div>載入失敗：${e.message}</div></div>`;
   }
 }
 
@@ -1542,6 +1777,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupConditionals();
   // 設定今天日期
   document.getElementById('inspect-date').value = new Date().toISOString().split('T')[0];
+  // 預設顯示首頁
+  showView('home');
 });
 </script>
 </body>
