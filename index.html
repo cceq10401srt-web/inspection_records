@@ -345,7 +345,7 @@
     border-radius: 14px 14px 0 0;
     display: flex; align-items: center; justify-content: space-between;
   }
-  .modal-head h3 { font-size: 16px; font-weight: 700; }
+  .modal-head h3 { font-size: 19px; font-weight: 700; }
   .modal-close {
     background: none; border: none; color: var(--white);
     font-size: 22px; cursor: pointer; line-height: 1; padding: 0 4px;
@@ -360,15 +360,15 @@
   /* 預覽表格 */
   .preview-section { margin-bottom: 18px; }
   .preview-section h4 {
-    font-size: 13px; font-weight: 700; color: var(--green-mid);
-    background: var(--green-light); padding: 5px 10px;
-    border-radius: 5px; margin-bottom: 8px;
+    font-size: 15px; font-weight: 700; color: var(--green-mid);
+    background: var(--green-light); padding: 6px 12px;
+    border-radius: 5px; margin-bottom: 10px;
   }
   .preview-grid {
-    display: grid; grid-template-columns: 130px 1fr; gap: 4px 10px;
+    display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px;
   }
-  .preview-grid .pk { font-size: 12px; color: var(--text-muted); }
-  .preview-grid .pv { font-size: 13px; color: var(--text); font-weight: 500; }
+  .preview-grid .pk { font-size: 14px; color: var(--text-muted); }
+  .preview-grid .pv { font-size: 15px; color: var(--text); font-weight: 500; }
 
   /* Mail 選填區 */
   .mail-toggle {
@@ -378,7 +378,7 @@
     border: 1.5px solid var(--border);
     border-radius: 9px;
   }
-  .mail-toggle label { font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .mail-toggle label { font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
   .mail-toggle input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--green-mid); cursor: pointer; }
   .mail-input-row {
     display: flex; gap: 8px; align-items: center; margin-top: 8px;
@@ -386,8 +386,8 @@
   }
   .mail-input-row.show { display: flex; }
   .mail-input-row input {
-    flex: 1; padding: 8px 12px; border: 1.5px solid var(--border);
-    border-radius: 7px; font-size: 13px; font-family: inherit;
+    flex: 1; padding: 10px 14px; border: 1.5px solid var(--border);
+    border-radius: 7px; font-size: 15px; font-family: inherit;
   }
   .mail-input-row input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(58,143,94,.15); }
 
@@ -395,12 +395,12 @@
   .btn-modal-cancel {
     background: var(--white); color: var(--text-muted);
     border: 1.5px solid var(--border); border-radius: 8px;
-    padding: 10px 20px; font-size: 14px; font-weight: 600;
+    padding: 12px 22px; font-size: 16px; font-weight: 600;
     cursor: pointer; font-family: inherit;
   }
   .btn-modal-submit {
     background: var(--green-mid); color: var(--white); border: none;
-    border-radius: 8px; padding: 10px 24px; font-size: 14px;
+    border-radius: 8px; padding: 12px 26px; font-size: 16px;
     font-weight: 700; cursor: pointer; font-family: inherit;
     transition: background .18s;
   }
@@ -408,7 +408,7 @@
   .btn-modal-submit:disabled { background: #a0b8a8; cursor: not-allowed; }
 
   @media(max-width:480px) {
-    .preview-grid { grid-template-columns: 110px 1fr; }
+    .preview-grid { grid-template-columns: 130px 1fr; }
     .modal-actions { flex-direction: column; }
     .btn-modal-cancel, .btn-modal-submit { width: 100%; text-align: center; }
   }
@@ -1098,15 +1098,46 @@ async function sendEmailNotify(data, customTo = null) {
 }
 
 async function sendLineNotify(data) {
-  const msg = [
+  // 執行檢測異常摘要
+  const inspItems = [
+    { label: '檢測前置作業', ok: data.i1_ok, detail: data.i1_detail },
+    { label: 'NMHC 連續監測', ok: data.i2_ok, detail: data.i2_detail },
+    { label: '個別物種採樣', ok: data.i3_ok, detail: data.i3_detail },
+    { label: '重金屬採樣', ok: data.i4_ok, detail: data.i4_detail },
+    { label: '其他項目', ok: data.i5_ok, detail: data.i5_detail },
+  ];
+  const abnormal = inspItems.filter(it => it.ok === '否');
+  const allNormal = inspItems.every(it => !it.ok || it.ok === '是');
+  let inspSummary;
+  if (allNormal || inspItems.every(it => !it.ok)) {
+    inspSummary = '✅ 執行檢測作業正常';
+  } else {
+    inspSummary = '⚠️ 異常項目：' + abnormal.map(it => it.label + (it.detail ? '（' + it.detail + '）' : '')).join('、');
+  }
+
+  const itriList = [data.itri1, data.itri2, data.itri3].filter(Boolean).join('、') || '—';
+  const testList = Array.isArray(data.test_items) && data.test_items.length ? data.test_items.join('、') : '—';
+  const portCount = Array.isArray(data.sampling_ports) ? data.sampling_ports.length + ' 個' : '—';
+
+  const lines = [
     '📋 排放管道檢測紀錄' + (data.status === 'done' ? '【已完成】' : '【草稿】'),
+    '─────────────────',
     '🏭 公私場所：' + (data.site_name || '—'),
     '📅 檢測日期：' + (data.inspect_date || '—'),
     '🏢 檢測公司：' + (data.company_name || '—'),
-    '👤 工研院同仁：' + ([data.itri1, data.itri2, data.itri3].filter(Boolean).join('、') || '—'),
-    '🔬 檢測項目：' + (Array.isArray(data.test_items) ? data.test_items.join('、') : '—'),
-    '📍 採樣口數：' + (Array.isArray(data.sampling_ports) ? data.sampling_ports.length + ' 個' : '—'),
-  ].join('\n');
+    '👤 同仁：' + itriList,
+    '🔬 檢測項目：' + testList,
+    '📍 採樣口數：' + portCount,
+    '─────────────────',
+    inspSummary,
+  ];
+
+  // 若有異常說明補充
+  if (data.anomaly) {
+    lines.push('📝 備註：' + data.anomaly);
+  }
+
+  const msg = lines.join('\n');
 
   try {
     const res = await fetch('https://uucujsguilndlwgueiez.supabase.co/functions/v1/line-notify', {
