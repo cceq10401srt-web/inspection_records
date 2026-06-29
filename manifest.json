@@ -1,0 +1,25 @@
+{
+  "name": "排放管道檢測紀錄表",
+  "short_name": "HAP檢測",
+  "description": "公私場所固定污染源檢測作業紀錄管理系統",
+  "start_url": "/inspection_records/",
+  "scope": "/inspection_records/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1a3d2b",
+  "theme_color": "#1a3d2b",
+  "icons": [
+    {
+      "src": "/inspection_records/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/inspection_records/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
